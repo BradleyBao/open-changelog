@@ -1,0 +1,6 @@
+FROM node:24-alpine
+WORKDIR /app
+COPY backend/server ./server
+RUN mkdir -p /app/data
+EXPOSE 8787
+CMD ["node", "server/index.mjs"]
