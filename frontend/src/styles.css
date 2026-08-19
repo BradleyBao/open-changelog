@@ -68,3 +68,4 @@ footer { max-width: 1000px; padding: 26px 32px; margin: auto; display: flex; jus
 .route-progress.is-loading { opacity: 1; }
 .route-progress.is-loading::after { animation: route-progress 1.1s ease-in-out infinite; }
 @keyframes route-progress { from { transform: translateX(0); } to { transform: translateX(365%); } }
+@media (prefers-reduced-motion: reduce) { .route-progress.is-loading::after { animation: none; } }
