@@ -1,0 +1,39 @@
+import { createServer } from 'node:http'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { randomUUID, timingSafeEqual } from 'node:crypto'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const root = dirname(dirname(fileURLToPath(import.meta.url)))
+const dataFile = join(root, 'data', 'pages.json')
+const port = Number(process.env.PORT || 8787)
+const defaultApiUrl = process.env.DEFAULT_CHANGELOG_API_URL || ''
+const sessions = new Map()
+async function savePages(pages) { await mkdir(dirname(dataFile), { recursive: true }); await writeFile(dataFile, JSON.stringify(pages, null, 2)) }
+async function loadPages() { try { const pages = JSON.parse(await readFile(dataFile, 'utf8')); if (pages.length) return pages.map((page) => ({ releaseMaxLength: 320, ...page })) } catch {} const now = new Date().toISOString(); const pages = [{ id: randomUUID(), name: 'OpenChangeLog', publicPath: 'changelog', apiUrl: defaultApiUrl || 'https://api.tianyibrad.com/api/collections/OpenChangeLog/records', releaseIdentifierField: 'id', releaseBlocks: [{ id: 'created', type: 'date', field: 'created' }, { id: 'version', type: 'badge', field: 'version' }, { id: 'title', type: 'title', field: 'title' }, { id: 'content', type: 'markdown', field: 'content' }], brandName: 'OpenChangeLog', logoUrl: '', websiteUrl: '', introLabel: 'Product updates', introDescription: 'Every release, improvement, and important fix in one place.', footerText: 'OpenChangeLog', isHome: true,  releaseMaxLength: 320, markdownCss: '', themeCss: '', created: now, updated: now }]; await savePages(pages); return pages }
+function send(response, status, payload) { response.writeHead(status, { 'content-type': 'application/json; charset=utf-8' }); response.end(payload === null ? '' : JSON.stringify(payload)) }
+async function body(request) { let data = ''; for await (const chunk of request) data += chunk; return JSON.parse(data || '{}') }
+function validPage(value) { return value && typeof value.name === "string" && typeof value.publicPath === "string" && typeof value.apiUrl === "string" && /^https?:\/\//.test(value.apiUrl) && (value.releaseIdentifierField === undefined || (typeof value.releaseIdentifierField === "string" && /^[A-Za-z_][A-Za-z0-9_]*$/.test(value.releaseIdentifierField))) }
+function samePassword(value) { const expected = process.env.ADMIN_PASSWORD; if (!expected || typeof value !== 'string' || value.length !== expected.length) return false; return timingSafeEqual(Buffer.from(value), Buffer.from(expected)) }
+function isAdmin(request) { const token = request.headers['x-admin-session']; const expiry = typeof token === 'string' ? sessions.get(token) : undefined; if (!expiry || expiry < Date.now()) { if (typeof token === 'string') sessions.delete(token); return false } return true }
+
+createServer(async (request, response) => {
+  const url = new URL(request.url, `http://${request.headers.host}`)
+  const pageId = url.pathname.match(/^\/admin-api\/pages\/([^/]+)$/)?.[1]
+  try {
+    if (request.method === 'POST' && url.pathname === '/admin-api/auth/login') { const { password } = await body(request); if (!process.env.ADMIN_PASSWORD) return send(response, 503, { error: 'ADMIN_PASSWORD is not configured' }); if (!samePassword(password)) return send(response, 401, { error: 'Invalid password' }); const token = randomUUID(); sessions.set(token, Date.now() + 86_400_000); return send(response, 200, { token, expiresIn: 86_400 }) }
+    if (url.pathname.startsWith('/admin-api/pages')) {
+      if (!isAdmin(request)) return send(response, 401, { error: 'Sign in required' })
+      const pages = await loadPages()
+      if (request.method === 'GET' && url.pathname === '/admin-api/pages') return send(response, 200, pages)
+      if (request.method === 'POST' && url.pathname === '/admin-api/pages') { const value = await body(request); if (!validPage(value)) return send(response, 400, { error: 'name, publicPath, and apiUrl are required' }); const page = { id: randomUUID(), markdownCss: '', releaseIdentifierField: 'id', releaseBlocks: [], releaseMaxLength: 320, ...value, created: new Date().toISOString(), updated: new Date().toISOString() }; if (page.isHome) pages.forEach((item) => { item.isHome = false }); pages.push(page); await savePages(pages); return send(response, 201, page) }
+      if (pageId && request.method === 'PATCH') { const value = await body(request); const index = pages.findIndex((page) => page.id === pageId); if (index < 0) return send(response, 404, { error: 'Page not found' }); const next = { ...pages[index], ...value, id: pageId, updated: new Date().toISOString() }; if (!validPage(next)) return send(response, 400, { error: 'Invalid page configuration' }); if (next.isHome) pages.forEach((item) => { item.isHome = false }); pages[index] = next; await savePages(pages); return send(response, 200, next) }
+      if (pageId && request.method === 'DELETE') { const next = pages.filter((page) => page.id !== pageId); if (next.length === pages.length) return send(response, 404, { error: 'Page not found' }); if (!next.some((page) => page.isHome) && next[0]) next[0].isHome = true; await savePages(next); return send(response, 204, null) }
+    }
+    if (request.method === 'GET' && url.pathname === '/admin-api/inspect') { if (!isAdmin(request)) return send(response, 401, { error: 'Sign in required' }); const apiUrl = url.searchParams.get('apiUrl') || '';  if (!/^https?:\/\//.test(apiUrl)) return send(response, 400, { error: 'A valid API URL is required' }); const target = new URL(apiUrl); target.searchParams.set('perPage', '1'); const upstream = await fetch(target); if (!upstream.ok) return send(response, upstream.status, { error: 'API request failed' }); const payload = await upstream.json(); const sample = Array.isArray(payload) ? payload[0] : payload.items?.[0] || payload.records?.[0] || null; return send(response, 200, { fields: sample && typeof sample === 'object' ? Object.keys(sample) : [], sample }) }
+    if (request.method === 'GET' && url.pathname === '/admin-api/public/page') { const path = url.searchParams.get('path')?.replace(/^\/+|\/+$/g, '') || ''; const pages = await loadPages(); const page = pages.find((item) => item.publicPath === path) || (!path && (pages.find((item) => item.isHome) || pages[0])); return page ? send(response, 200, page) : send(response, 404, { error: 'Page not found' }) }
+    const recordsMatch = url.pathname.match(/^\/admin-api\/public\/pages\/([^/]+)\/records$/)
+    if (request.method === 'GET' && recordsMatch) { const page = (await loadPages()).find((item) => item.id === recordsMatch[1]); if (!page) return send(response, 404, { error: 'Page not found' }); const target = new URL(page.apiUrl); target.searchParams.set('sort', '-created'); target.searchParams.set('perPage', '100'); const upstream = await fetch(target); return send(response, upstream.status, await upstream.json()) }
+    return send(response, 404, { error: 'Not found' })
+  } catch (error) { return send(response, 500, { error: error instanceof Error ? error.message : 'Server error' }) }
+}).listen(port, () => console.log(`OpenChangeLog backend listening on http://localhost:${port}`))

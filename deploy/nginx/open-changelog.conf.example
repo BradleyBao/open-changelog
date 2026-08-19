@@ -1,0 +1,28 @@
+# Replace updates.example.com and /var/www/open-changelog with your values.
+# Build the frontend with `cd frontend && npm run build`, then copy dist/ to the root below.
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name updates.example.com;
+
+    root /var/www/open-changelog;
+    index index.html;
+
+    # The Node backend runs privately on localhost:8787.
+    location /admin-api/ {
+        proxy_pass http://127.0.0.1:8787;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # React handles /, /admin, /{publicPath}, and /{publicPath}/{releaseId}.
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+
+# Add your normal TLS server block or let Certbot manage it.

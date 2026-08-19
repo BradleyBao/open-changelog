@@ -1,0 +1,23 @@
+[
+  {
+    "id": "710555cf-365d-40ec-89d2-07a14f81eb59",
+    "name": "ST2.0",
+    "publicPath": "st20",
+    "apiUrl": "https://api.tianyibrad.com/api/collections/ST2_0/records",
+    "created": "2026-08-18T16:22:20.982Z",
+    "updated": "2026-08-18T16:26:54.284Z"
+  },
+  {
+    "id": "4917f9b6-a2fb-439d-96ff-019521c9b580",
+    "markdownCss": ".changelog-content h2 {\ncolor: red;\n}",
+    "name": "Example Page",
+    "publicPath": "example",
+    "apiUrl": "https://api.tianyibrad.com/api/collections/ST2_0/records",
+    "introLabel": "Example Product",
+    "introDescription": "Every release, improvement, and important fix in one place.",
+    "footerText": "Product updates",
+    "created": "2026-08-19T08:19:49.101Z",
+    "updated": "2026-08-19T08:26:28.977Z",
+    "isHome": false
+  }
+]
