@@ -1,0 +1,21 @@
+services:
+  app:
+    image: ghcr.io/bradleybao/open-changelog:${OPEN_CHANGELOG_TAG:-latest}
+    depends_on:
+      - backend
+    ports:
+      - "${OPEN_CHANGELOG_HOST:-0.0.0.0}:${OPEN_CHANGELOG_PORT:-8080}:80"
+    restart: unless-stopped
+
+  backend:
+    image: ghcr.io/bradleybao/open-changelog-backend:${OPEN_CHANGELOG_TAG:-latest}
+    environment:
+      PORT: "8787"
+      DEFAULT_CHANGELOG_API_URL: ${DEFAULT_CHANGELOG_API_URL:-https://api.tianyibrad.com/api/collections/OpenChangeLog/records}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
+    volumes:
+      - open-changelog-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  open-changelog-data:
