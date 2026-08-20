@@ -31,7 +31,8 @@ export interface ChangeLogPage {
   apiUrl: string
   releaseIdentifierField: string
   releaseBlocks: ReleaseBlock[]
-  releaseMaxLength: number
+  releaseMaxHeight: number
+  apiTimeoutSeconds: number
   markdownCss: string
   themeCss: string
   brandName: string

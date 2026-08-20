@@ -15,5 +15,5 @@ export const pagesApi = {
   remove: (id: string, token: string) => adminRequest<void>(`/pages/${id}`, token, { method: 'DELETE' }),
   publicPage: (path: string) => request<ChangeLogPage>(`/public/page?path=${encodeURIComponent(path)}`),
   inspect: (apiUrl: string, token: string) => adminRequest<{ fields: string[]; sample: ChangeLogRecord | null }>("/inspect?apiUrl=" + encodeURIComponent(apiUrl), token),
-  records: async (id: string) => { const payload = await request<PocketBaseList<ChangeLogRecord> | ChangeLogRecord[]>(`/public/pages/${id}/records`); return Array.isArray(payload) ? payload : payload.items },
+  records: async (id: string, page = 1) => { const payload = await request<PocketBaseList<ChangeLogRecord> | ChangeLogRecord[]>(`/public/pages/${id}/records?page=${page}`); return Array.isArray(payload) ? { items: payload, page: 1, totalPages: 1 } : payload },
 }
