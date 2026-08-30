@@ -1,6 +1,6 @@
 # Admin And Backend
 
-OpenChangeLog stores changelog page configuration in `backend/data/pages.json`. Releases are not duplicated: the configured PocketBase records endpoint remains the source of truth.
+What's New stores changelog page configuration in `backend/data/pages.json`. Releases are not duplicated: the configured PocketBase records endpoint remains the source of truth.
 
 ## Run locally
 
@@ -65,4 +65,4 @@ The Release layout editor reads the first available record and suggests its fiel
 
 ## First-run example
 
-On an empty data volume, OpenChangeLog creates an editable OpenChangeLog home page with local sample releases. It demonstrates the tag, version, title, content, created, and updated fields. Edit or delete it from Admin after connecting your own collection.
+On an empty data volume, What's New creates an editable What's New home page with local sample releases. It demonstrates the tag, version, title, content, created, and updated fields. Edit or delete it from Admin after connecting your own collection.

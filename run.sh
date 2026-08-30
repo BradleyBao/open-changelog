@@ -28,4 +28,4 @@ fi
 
 PORT=$(awk -F= "/^OPEN_CHANGELOG_PORT=/{print $2}" .env)
 PORT=${PORT:-8080}
-echo "OpenChangeLog is running at http://localhost:${PORT}"
+echo "What's New is running at http://localhost:${PORT}"

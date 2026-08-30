@@ -1,4 +1,4 @@
-# OpenChangeLog
+# What's New
 
 > **Everything you ship, beautifully documented.**
 

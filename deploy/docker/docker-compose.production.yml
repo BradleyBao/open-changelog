@@ -1,6 +1,6 @@
 services:
   app:
-    image: ghcr.io/bradleybao/open-changelog:${OPEN_CHANGELOG_TAG:-latest}
+    image: ghcr.io/bradleybao/whats-new:${OPEN_CHANGELOG_TAG:-latest}
     depends_on:
       - backend
     ports:
@@ -8,7 +8,7 @@ services:
     restart: unless-stopped
 
   backend:
-    image: ghcr.io/bradleybao/open-changelog-backend:${OPEN_CHANGELOG_TAG:-latest}
+    image: ghcr.io/bradleybao/whats-new-backend:${OPEN_CHANGELOG_TAG:-latest}
     environment:
       PORT: "8787"
       DEFAULT_CHANGELOG_API_URL: ${DEFAULT_CHANGELOG_API_URL:-https://api.tianyibrad.com/api/collections/OpenChangeLog/records}
