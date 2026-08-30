@@ -6,5 +6,5 @@ frontend/vite.config.d.ts
 .env.local
 .env
 docs/notes/
-
+backend/data/pages.json
 backend/data/pages.local.json
